@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CreditCard, Loader2 } from "lucide-react";
 import api from "../lib/api";
 import { useOverride } from "../lib/useOverride";
@@ -8,7 +8,10 @@ import { naira, cap } from "../lib/format";
 
 export default function PaymentModal({ folio, onClose, onPaid }) {
   const [amount, setAmount] = useState(String(Math.max(0, folio.balance)));
-  const [method, setMethod] = useState("paystack");
+  /* Card is the fastest method when it works, so it is the default — but only
+     when the server can actually complete one. Offering a method that ends in
+     an error is worse than not offering it: the guest is standing there. */
+  const [method, setMethod] = useState("cash");
   const [reference, setReference] = useState("");
   const [busy, setBusy] = useState(false);
   const { runWithOverride, overrideDialog } = useOverride();
@@ -18,6 +21,16 @@ export default function PaymentModal({ folio, onClose, onPaid }) {
      leaving this modal. The row already carries the totals, so the lines are a
      bonus — if the request fails the modal still works. */
   const { data: detail } = useApi(() => api.folio(folio.bookingId), [folio.bookingId]);
+
+  /* Whether the hotel can take a card at all. Asked of the server rather than
+     built in, so the day the live key goes on nothing here needs changing —
+     the option simply comes back. Until it answers, card stays hidden. */
+  const { data: payOptions } = useApi(() => api.paymentOptions(), []);
+  const cardOnline = Boolean(payOptions?.online);
+
+  useEffect(() => {
+    if (cardOnline) setMethod((m) => (m === "cash" ? "paystack" : m));
+  }, [cardOnline]);
 
   const roomCharges = folio.roomCharges ?? folio.charges;
   const facilityCharges = folio.facilityCharges ?? 0;
@@ -145,7 +158,7 @@ export default function PaymentModal({ folio, onClose, onPaid }) {
         </Field>
         <Field label="Method" htmlFor="mth">
           <select id="mth" value={method} onChange={(e) => { setMethod(e.target.value); setReference(""); }}>
-            <option value="paystack">Paystack (card)</option>
+            {cardOnline && <option value="paystack">Paystack (card)</option>}
             <option value="transfer">Bank transfer</option>
             <option value="cash">Cash</option>
             <option value="pos">Card machine</option>

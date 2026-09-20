@@ -142,6 +142,14 @@ export const api = {
   acceptRequest: (id, roomNumber) => request(`/api/requests/${id}/accept`, { method: "POST", body: { roomNumber } }),
   declineRequest: (id, reason) => request(`/api/requests/${id}/decline`, { method: "POST", body: { reason } }),
 
+  /**
+   * What the hotel can take money through right now. Card payment is off
+   * until a live Paystack key is on the server; the desk should not be shown
+   * a method that cannot complete. Unauthenticated, so it answers before
+   * anybody signs in.
+   */
+  paymentOptions: () => request("/api/public/payment-options"),
+
   // guests
   /**
    * Answers { guests, total, hasMore }. The list is ordered by who was here
