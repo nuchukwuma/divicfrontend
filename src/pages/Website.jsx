@@ -265,12 +265,6 @@ function ContentForm({ editing, onClose, onSaved }) {
 
         <div>
           <Preview draft={d} />
-          <div style={{ marginTop: 12 }}>
-            <Note>
-              Text only — no formatting or HTML. Links must be a path on the site
-              like /book, or a full https:// address.
-            </Note>
-          </div>
         </div>
       </div>
     </Modal>
